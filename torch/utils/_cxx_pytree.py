@@ -35,6 +35,9 @@ __all__ = [
     "Context",
     "FlattenFunc",
     "UnflattenFunc",
+    "DumpableContext",
+    "ToDumpableContextFn",
+    "FromDumpableContextFn",
     "TreeSpec",
     "LeafSpec",
     "_register_pytree_node",
@@ -69,6 +72,9 @@ TreeSpec = PyTreeSpec
 FlattenFunc = Callable[[PyTree], Tuple[List, Context]]
 UnflattenFunc = Callable[[Iterable, Context], PyTree]
 OpTreeUnflattenFunc = Callable[[Context, Iterable], PyTree]
+DumpableContext = Any  # Any json dumpable text
+ToDumpableContextFn = Callable[[Context], DumpableContext]
+FromDumpableContextFn = Callable[[DumpableContext], Context]
 
 
 def _reverse_args(func: UnflattenFunc) -> OpTreeUnflattenFunc:
@@ -83,7 +89,11 @@ def register_pytree_node(
     cls: Type[Any],
     flatten_func: FlattenFunc,
     unflatten_func: UnflattenFunc,
+    *,
+    to_dumpable_context: Optional[ToDumpableContextFn] = None,
+    from_dumpable_context: Optional[FromDumpableContextFn] = None,
     namespace: str = "torch",
+    _register_python_pytree_node: bool = True,
 ) -> None:
     """Extend the set of types that are considered internal nodes in pytrees.
 
@@ -192,20 +202,27 @@ def register_pytree_node(
             )
         )
     """
-    from ._pytree import _register_pytree_node
+    # TODO(XuehaiPan): remove this condition when we make Python pytree out-of-box support
+    # PyStructSequence types
+    if not optree.is_structseq_class(cls):
+        optree.register_pytree_node(
+            cls,
+            flatten_func,
+            _reverse_args(unflatten_func),
+            namespace=namespace,
+        )
 
-    _register_pytree_node(
-        cls,
-        flatten_func,
-        unflatten_func,
-    )
+    if _register_python_pytree_node:
+        from . import _pytree
 
-    optree.register_pytree_node(
-        cls,
-        flatten_func,
-        _reverse_args(unflatten_func),
-        namespace=namespace,
-    )
+        _pytree._register_pytree_node(
+            cls,
+            flatten_func,
+            unflatten_func,
+            to_dumpable_context=to_dumpable_context,
+            from_dumpable_context=from_dumpable_context,
+            _register_cxx_pytree_node=False,
+        )
 
 
 _register_pytree_node = register_pytree_node
