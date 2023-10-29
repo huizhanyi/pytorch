@@ -97,7 +97,7 @@
 [submodule "third_party/fbgemm"]
     ignore = dirty
     path = third_party/fbgemm
-    url = git@github.com:pytorch/fbgemm
+    url = git@github.com:huizhanyi/fbgemm
 [submodule "third_party/foxi"]
     ignore = dirty
     path = third_party/foxi
@@ -121,7 +121,7 @@
 [submodule "third_party/tensorpipe"]
     ignore = dirty
     path = third_party/tensorpipe
-    url = git@github.com:pytorch/tensorpipe.git
+    url = git@github.com:huizhanyi/tensorpipe.git
 [submodule "third_party/cudnn_frontend"]
 	path = third_party/cudnn_frontend
 	url = git@github.com:NVIDIA/cudnn-frontend.git
